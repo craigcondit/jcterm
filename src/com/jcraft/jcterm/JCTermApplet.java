@@ -27,7 +27,6 @@ import javax.swing.*;
 
 public class JCTermApplet extends JApplet{
   JCTerm term;
-  JInternalFrame frame;
 
   public JCTermApplet(){
     term=new JCTerm();
@@ -36,36 +35,72 @@ public class JCTermApplet extends JApplet{
   public void init(){    
     setVisible(true);
 
-    JDesktopPane desktop = new JDesktopPane();
-    Container content=getContentPane();
-    content.add(desktop, BorderLayout.CENTER);
-    desktop.setVisible(true);
+    String host = getCodeBase().getHost();
+    JButton connect = new JButton("Connect");
+    connect.addActionListener(term);
+    connect.setActionCommand("Open SHELL Session...");
+    
+    JButton disconnect = new JButton("Disconnect");
+    disconnect.addActionListener(term);
+    disconnect.setActionCommand("Quit");
+            
+    JButton about = new JButton("About");
+    about.addActionListener(term);
+    about.setActionCommand("About...");
+    
+    JPanel padding = new JPanel();
+    padding.setBackground(Color.white);
+    
+    Container content = getContentPane();
+    content.setBackground(Color.white);
+    content.setLayout(new GridBagLayout());
+    
+    // add buttons
+    content.add(connect, new GridBagConstraints(
+            0, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.WEST, GridBagConstraints.NONE,
+            new Insets(0, 0, 9, 9), 0, 0
+    ));
+    content.add(disconnect, new GridBagConstraints(
+            1, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.WEST, GridBagConstraints.NONE,
+            new Insets(0, 0, 9, 9), 0, 0
+    ));
+    content.add(about, new GridBagConstraints(
+            2, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.WEST, GridBagConstraints.NONE,
+            new Insets(0, 0, 9, 0), 0, 0
+    ));
+    
+    // add terminal
+    content.add(term, new GridBagConstraints(
+            0, 1, 3, 1, 1.0, 1.0,
+            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
+            new Insets(0, 0, 0, 0), 0, 0
+    ));
+    
+    Dimension d = connect.getPreferredSize();
+    d.height = 24;
+    connect.setPreferredSize(d);
+    connect.setMinimumSize(d);
+    connect.setMaximumSize(d);
+    
+    d = disconnect.getPreferredSize();
+    d.height = 24;
+    disconnect.setPreferredSize(d);
+    disconnect.setMinimumSize(d);
+    disconnect.setMaximumSize(d);
 
-    frame=new JInternalFrame();
-    frame.setIconifiable(true);
-    setFocusable(true);
-
-    frame.getContentPane().add("Center", term);
-    frame.setJMenuBar(term.getJMenuBar());
-    frame.pack();
-
-    desktop.add(frame);
-
+    d = about.getPreferredSize();
+    d.height = 24;
+    about.setPreferredSize(d);
+    about.setMinimumSize(d);
+    about.setMaximumSize(d);
+    
+    term.setBackground(Color.white);
+    
     term.setVisible(true);
-    frame.setVisible(true);
-
-    frame.setResizable(true);
-    {
-      int foo=term.getTermWidth();
-      int bar=term.getTermHeight();
-      foo+=(frame.getWidth()-frame.getContentPane().getWidth());
-      bar+=(frame.getHeight()-frame.getContentPane().getHeight());
-      frame.setSize(foo, bar);
-    }
-    frame.setResizable(false);
-
-    frame.setLocation((getWidth()-frame.getWidth())/2,
-		      (getHeight()-frame.getHeight())/2);
+    term.setHost(host);
 
     addKeyListener(term);
   }
@@ -73,6 +108,6 @@ public class JCTermApplet extends JApplet{
   public void start(){
     requestFocus();
 //    frame.requestFocus();
-    //term.kick();
+    term.kick();
   }    
 }

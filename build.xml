@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<project name="jcterm" default="dist">
+	<description>
+		JCTerm - Java SSH2 client
+	
+		This version is based on jsch 0.1.24 and jterm 0.0.8,
+		both available from http://www.jcraft.com/. Full source
+		for these modifications is included in the file jterm-src.jar.
+	</description>
+
+    <target name="build" description="Create build targets">
+    	<!-- make directories -->
+    	<mkdir dir="bin" />
+    	
+    	<!-- compile java files -->
+		<javac target="1.4" source="1.4" srcdir="src" destdir="bin" />
+    	
+    	<!-- copy non-java files to output -->
+     	<copy todir="bin">
+    		<fileset dir="src">
+    			<exclude name="**/*.java" />
+     		</fileset>
+    	</copy>
+    </target>
+	
+	<target name="dist" description="Build distribution targets" depends="build">
+		<!-- make directories -->
+		<mkdir dir="dist" />
+		
+		<!-- create src jar file -->
+		<jar basedir="." destfile="dist/jcterm-src.jar" update="no">
+			<exclude name="bin" />
+			<exclude name="bin/**/*" />
+			<exclude name="dist" />
+			<exclude name="dist/**/*" />
+			<exclude name=".project" />
+			<exclude name=".classpath" />
+			<exclude name=".settings" />
+			<exclude name=".settings/**/*" />
+			<exclude name="**/*/.cvsignore" />
+		</jar>
+		
+		<!-- create dist jar file -->
+		<jar basedir="bin" destfile="dist/jcterm.jar" update="no" />
+	</target>
+	
+	<target name="clean" description="Clean build targets">
+		<delete dir="dist" />
+		<delete dir="bin" />
+	</target>
+
+</project>
+

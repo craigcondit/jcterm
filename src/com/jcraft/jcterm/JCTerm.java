@@ -37,7 +37,8 @@ public class JCTerm  extends JPanel implements KeyListener, ActionListener, Runn
   static String COPYRIGHT=
 "JCTerm 0.0.8\nCopyright (C) 2002-2005 ymnk<ymnk@jcraft.com>, JCraft,Inc.\n"+
 "Official Homepage: http://www.jcraft.com/jcterm/\n"+
-"This software is licensed under GNU LGPL.";
+"This software is licensed under GNU LGPL.\n"+
+"Modified 2005 by Craig Condit for StrategicHosts.Com.";
   private static final int SHELL=0;
   private static final int SFTP=1;
   private static final int EXEC=2;
@@ -51,8 +52,8 @@ public class JCTerm  extends JPanel implements KeyListener, ActionListener, Runn
   private BufferedImage background;
   private Graphics2D cursor_graphics;
   private Graphics2D graphics;
-  private java.awt.Color bground=Color.white;
-  private java.awt.Color fground=Color.black;
+  private java.awt.Color bground=Color.black;
+  private java.awt.Color fground=new Color(0f,0.9f,0f);
   private java.awt.Component term_area=null;
   private java.awt.Font font;
 
@@ -69,7 +70,7 @@ public class JCTerm  extends JPanel implements KeyListener, ActionListener, Runn
   private String xhost="127.0.0.1";    
   private int xport=0;    
   private boolean xforwarding=false;
-  private String user=System.getProperty("user.name");
+  private String user;
   private String host="127.0.0.1";
 
   private String proxy_http_host=null;
@@ -82,14 +83,20 @@ public class JCTerm  extends JPanel implements KeyListener, ActionListener, Runn
   private Proxy proxy=null;
 
   private boolean antialiasing=true;
-  //private int line_space=0;
-  private int line_space=-2;
+  private int line_space=0;
   private int compression=0;
 
   private Splash splash=null;
 
   public JCTerm(){
-    font=java.awt.Font.decode("Monospaced-14");
+    try {
+      InputStream is = getClass().getResourceAsStream("/fonts/VeraMono.ttf");      
+      Font pattern = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, is);
+      font=pattern.deriveFont((float) 12);
+    } catch (Throwable t) {
+      t.printStackTrace();
+      System.err.println("Falling back to default font");
+    }
     img=new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
     graphics=(Graphics2D)(img.getGraphics());
     graphics.setFont(font);
@@ -158,33 +165,18 @@ System.out.println(fo.getMaxAdvance());
     this.thread.start();
   }
 
+  public void setHost(String host) { this.host = host; }
+  
   private Emulator emulator=null;
   public void run(){
+    String user=null;
     JSch jsch=new JSch();
     while(thread!=null){
       try{
 	int port=22;
-	try{
-	  String _host=JOptionPane.showInputDialog(this, 
-						   "Enter username@hostname",
-						   user+"@"+host);
-	  if(_host==null){
-	    break;
-	  }
-	  String _user=_host.substring(0, _host.indexOf('@'));
-	  _host=_host.substring(_host.indexOf('@')+1);
-	  if(_host==null || _host.length()==0){
-	    continue;
-	  }
-          if(_host.indexOf(':')!=-1){
-            try{
-              port=Integer.parseInt(_host.substring(_host.indexOf(':')+1));
-            }
-            catch(Exception eee){}
-            _host=_host.substring(0, _host.indexOf(':'));
-          }
-	  user=_user;
-	  host=_host;
+    try{
+      user=JOptionPane.showInputDialog(this, "Enter username", "Login", JOptionPane.QUESTION_MESSAGE);
+      if(user==null) break;
 	}
 	catch(Exception ee){
 	  continue;
@@ -194,7 +186,7 @@ System.out.println(fo.getMaxAdvance());
   	  session=jsch.getSession(user, host, port);
 	  session.setProxy(proxy);
 
-	  UserInfo ui=new MyUserInfo();
+	  UserInfo ui=new MyUserInfo(this);
 	  session.setUserInfo(ui);
 
 	  java.util.Properties config=new java.util.Properties();
@@ -206,6 +198,8 @@ System.out.println(fo.getMaxAdvance());
 	    config.put("compression.s2c", "zlib,none");
 	    config.put("compression.c2s", "zlib,none");
 	  }
+      config.put("StrictHostKeyChecking", "no");
+      
 	  session.setConfig(config);
 
 	  session.setTimeout(5000);
@@ -448,9 +442,11 @@ System.out.println(fo.getMaxAdvance());
     Toolkit.getDefaultToolkit().beep();
   }
   public class MyUserInfo implements UserInfo{
+    private Component owner;
+    public MyUserInfo(Component owner) { this.owner = owner; }
     public boolean promptYesNo(String str){
       Object[] options={ "yes", "no" };
-      int foo=JOptionPane.showOptionDialog(null,
+      int foo=JOptionPane.showOptionDialog(owner,
 					   str,
 					   "Warning",
 					   JOptionPane.DEFAULT_OPTION,
@@ -461,27 +457,35 @@ System.out.println(fo.getMaxAdvance());
 
     String passwd=null;
     String passphrase=null;
-    JTextField pword=new JPasswordField(20); 
+    final JTextField pword=new JPasswordField(20); 
 
     public String getPassword(){  return passwd; }
     public String getPassphrase(){ return passphrase; }
 
     public boolean promptPassword(String message){
-      Object[] ob={pword};
-      int result=
-	JOptionPane.showConfirmDialog(null, ob, message,
-				      JOptionPane.OK_CANCEL_OPTION);
-      if(result==JOptionPane.OK_OPTION){
-        passwd=pword.getText();
-        return true;
+      JPasswordField passwordField = new JPasswordField(20);
+      JOptionPane optionPane = new JOptionPane();
+      optionPane.setMessage(new Object[] { "Enter password", passwordField });
+      optionPane.setMessageType(JOptionPane.QUESTION_MESSAGE);
+      optionPane.setOptionType(JOptionPane.OK_CANCEL_OPTION);
+      JDialog dialog = optionPane.createDialog(owner, message);
+      dialog.setVisible(true);
+      Integer value = (Integer) optionPane.getValue();
+      if (value == null || 
+          value.intValue() == JOptionPane.CANCEL_OPTION || 
+          value.intValue() == JOptionPane.CLOSED_OPTION) {
+          dialog.dispose();
+            return false;
       }
-      else{ return false; }
+      passwd = new String(passwordField.getPassword());
+      dialog.dispose();
+      return true;
     }
     public boolean promptPassphrase(String message){
       return true; 
     }
     public void showMessage(String message){
-      JOptionPane.showMessageDialog(null, message);
+      JOptionPane.showMessageDialog(owner, message);
     }
   }
 
