@@ -35,10 +35,9 @@ import java.text.*;
 
 public class JCTerm  extends JPanel implements KeyListener, ActionListener, Runnable, Term{
   static String COPYRIGHT=
-"JCTerm 0.0.8\nCopyright (C) 2002-2005 ymnk<ymnk@jcraft.com>, JCraft,Inc.\n"+
+"JCTerm 0.0.8 (modified for same-server only use)\nCopyright (C) 2002-2005 ymnk<ymnk@jcraft.com>, JCraft,Inc.\n"+
 "Official Homepage: http://www.jcraft.com/jcterm/\n"+
-"This software is licensed under GNU LGPL.\n"+
-"Modified 2005 by Craig Condit for StrategicHosts.Com.";
+"This software is licensed under GNU LGPL.";
   private static final int SHELL=0;
   private static final int SFTP=1;
   private static final int EXEC=2;
